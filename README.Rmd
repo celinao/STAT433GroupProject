@@ -1,0 +1,8 @@
+---
+title: "README"
+author: "Celina"
+date: "10/25/2021"
+output: github_document
+---
+
+STAT433 Group Project Repo
