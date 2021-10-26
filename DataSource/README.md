@@ -3,11 +3,6 @@ DataSource
 Celina Ough, Maya Tunney, Robert George
 10/25/2021
 
-This Census Data contains information on the breakdown of household
-types and income for counties in Wisconsin. For example, this data
-includes the median income for families, single people, and married
-couples in the county.
-
 ## Wisconsin Demographic Data
 
 [Link to County
@@ -16,11 +11,11 @@ Demographics](https://data.census.gov/cedsci/table?q=Race%20demographics&g=04000
 This is census data about the demographics of counties in Wisconsin. It
 includes information on race, age, and sex. There are many columns in
 the dataset since each category (race, age, sex) is is divided into many
-categories so for ease of readibility we will only show the first
+categories. So, for ease of readibility we will only show the first
 sixteen column names which detail the sex and age categories.
 
 ``` r
-WI_data <- read_csv("..\\data\\WICounty2019Demographics.csv", skip = 1) %>%
+demo_2019 <- read_csv("..\\data\\WICounty2019Demographics.csv", skip = 1) %>%
   select(-matches("Margin"), 
          -matches("Percent"), 
          -matches("ratio"),
@@ -30,7 +25,7 @@ WI_data <- read_csv("..\\data\\WICounty2019Demographics.csv", skip = 1) %>%
   rename_all(funs(str_replace_all(., "Estimate!!", ""))) %>%
   rename_all(funs(str_replace_all(., "Total population!!", "")))
 
-head(WI_data[,1:4])
+head(demo_2019[,1:4])
 ```
 
     ## # A tibble: 6 x 4
@@ -44,7 +39,7 @@ head(WI_data[,1:4])
     ## 6                 76747             37283              39464                4145
 
 ``` r
-colnames(WI_data)[1:16]
+colnames(demo_2019)[1:16]
 ```
 
     ##  [1] "SEX AND AGE!!Total population"  "SEX AND AGE!!Male"             
@@ -56,6 +51,58 @@ colnames(WI_data)[1:16]
     ## [13] "SEX AND AGE!!60 to 64 years"    "SEX AND AGE!!65 to 74 years"   
     ## [15] "SEX AND AGE!!75 to 84 years"    "SEX AND AGE!!85 years and over"
 
+## Wisconsin Income Data
+
+[Link to County
+Income](https://data.census.gov/cedsci/table?q=wisconsin%20income&g=0400000US55%240500000&tid=ACSST1Y2019.S1903&hidePreview=true&moe=false)
+
+This Census Data contains information on the breakdown of household
+types and income for counties in Wisconsin. For example, this data
+includes the median income for families, single people, and married
+couples in the county. Like the other data sets the data has many
+columns so for ease of readibility we will only display column names
+from one section of the data, specifically, median income by race.
+
+``` r
+income_2019 <- read_csv("..\\data\\WICounty2019Income.csv", na = "N", skip=1) %>%
+  select(-id, 
+         -matches("Margin"),
+         -matches("Distribution"),
+         -matches("FAMILY SIZE")) %>%
+  rename_all(funs(str_replace_all(., "Estimate!!", ""))) %>%
+  rename_all(funs(str_replace_all(., "Number!!", ""))) %>%
+  rename_all(funs(str_replace_all(., "FAMILIES!!", ""))) %>%
+  rename_all(funs(str_replace_all(., "HOUSEHOLD INCOME BY AGE OF HOUSEHOLDER!!", ""))) %>%
+  rename_all(funs(str_replace_all(., "NONFAMILY HOUSEHOLDS!!", ""))) %>%
+  rename_all(funs(str_replace_all(., "HOUSEHOLD INCOME BY RACE AND HISPANIC OR LATINO ORIGIN OF HOUSEHOLDER!!", "")))
+  
+head(income_2019[,1:4])
+```
+
+    ## # A tibble: 6 x 4
+    ##   `Geographic Area Na~ Households `Households!!One ra~ `Households!!One race--!~
+    ##   <chr>                     <dbl>                <dbl>                     <dbl>
+    ## 1 Brown County, Wisco~     107385                96742                        NA
+    ## 2 Dane County, Wiscon~     229760               201395                     10664
+    ## 3 Dodge County, Wisco~      35104                34389                        NA
+    ## 4 Eau Claire County, ~      41385                38800                        NA
+    ## 5 Fond du Lac County,~      42604                40480                        NA
+    ## 6 Jefferson County, W~      32783                31419                        NA
+
+``` r
+colnames(income_2019)[37:45]
+```
+
+    ## [1] "Median income (dollars)!!Households!!One race--!!White"                                     
+    ## [2] "Median income (dollars)!!Households!!One race--!!Black or African American"                 
+    ## [3] "Median income (dollars)!!Households!!One race--!!American Indian and Alaska Native"         
+    ## [4] "Median income (dollars)!!Households!!One race--!!Asian"                                     
+    ## [5] "Median income (dollars)!!Households!!One race--!!Native Hawaiian and Other Pacific Islander"
+    ## [6] "Median income (dollars)!!Households!!One race--!!Some other race"                           
+    ## [7] "Median income (dollars)!!Households!!Two or more races"                                     
+    ## [8] "Median income (dollars)!!Households!!Hispanic or Latino origin (of any race)"               
+    ## [9] "Median income (dollars)!!Households!!White alone, not Hispanic or Latino"
+
 ## Wisconsin Public Library Data
 
 [Link to Library Data](https://dpi.wi.gov/pld/data-reports/service-data)
@@ -63,8 +110,8 @@ colnames(WI_data)[1:16]
 This dataset includes information about Public Libraries in Wisconsin.
 It includes information about funding, location, hours, resources and
 how the public utilizes the library. This dataset contains 102 columns
-so for ease of readibility we will only show 17 column names that detail
-the usage of the library programs.
+so for ease of readibility we will only show 17 additional column names
+that detail the usage of the library programs.
 
 ``` r
 library_data <- readxl::read_excel("..\\data\\public_library_service_data_2019.xlsx", sheet = "2019 PRELIMINARY DATA", skip = 1) %>%

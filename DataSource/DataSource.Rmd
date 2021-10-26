@@ -2,10 +2,8 @@
 title: "DataSource"
 author: "Celina Ough, Maya Tunney, Robert George"
 date: "10/25/2021"
-output: github_document
+output: html_document
 ---
-
-This Census Data contains information on the breakdown of household types and income for counties in Wisconsin. For example, this data includes the median income for families, single people, and married couples in the county. 
 
 
 ```{r, include=FALSE}
@@ -21,10 +19,10 @@ library(stringr)
   
 [Link to County Demographics](https://data.census.gov/cedsci/table?q=Race%20demographics&g=0400000US55%240600000&tid=ACSDP1Y2019.DP05&moe=false&hidePreview=false)
   
-This is census data about the demographics of counties in Wisconsin. It includes information on race, age, and sex. There are many columns in the dataset since each category (race, age, sex) is is divided into many categories so for ease of readibility we will only show the first sixteen column names which detail the sex and age categories.   
+This is census data about the demographics of counties in Wisconsin. It includes information on race, age, and sex. There are many columns in the dataset since each category (race, age, sex) is is divided into many categories. So, for ease of readibility we will only show the first sixteen column names which detail the sex and age categories.   
 
 ```{r, message=FALSE, warning=FALSE}
-WI_data <- read_csv("..\\data\\WICounty2019Demographics.csv", skip = 1) %>%
+demo_2019 <- read_csv("..\\data\\WICounty2019Demographics.csv", skip = 1) %>%
   select(-matches("Margin"), 
          -matches("Percent"), 
          -matches("ratio"),
@@ -34,15 +32,39 @@ WI_data <- read_csv("..\\data\\WICounty2019Demographics.csv", skip = 1) %>%
   rename_all(funs(str_replace_all(., "Estimate!!", ""))) %>%
   rename_all(funs(str_replace_all(., "Total population!!", "")))
 
-head(WI_data[,1:4])
-colnames(WI_data)[1:16]
+head(demo_2019[,1:4])
+colnames(demo_2019)[1:16]
+```
+
+
+## Wisconsin Income Data  
+
+[Link to County Income](https://data.census.gov/cedsci/table?q=wisconsin%20income&g=0400000US55%240500000&tid=ACSST1Y2019.S1903&hidePreview=true&moe=false)
+  
+This Census Data contains information on the breakdown of household types and income for counties in Wisconsin. For example, this data includes the median income for families, single people, and married couples in the county. Like the other data sets the data has many columns so for ease of readibility we will only display column names from one section of the data, specifically, median income by race.  
+
+```{r, message = FALSE, warning=FALSE}
+income_2019 <- read_csv("..\\data\\WICounty2019Income.csv", na = "N", skip=1) %>%
+  select(-id, 
+         -matches("Margin"),
+         -matches("Distribution"),
+         -matches("FAMILY SIZE")) %>%
+  rename_all(funs(str_replace_all(., "Estimate!!", ""))) %>%
+  rename_all(funs(str_replace_all(., "Number!!", ""))) %>%
+  rename_all(funs(str_replace_all(., "FAMILIES!!", ""))) %>%
+  rename_all(funs(str_replace_all(., "HOUSEHOLD INCOME BY AGE OF HOUSEHOLDER!!", ""))) %>%
+  rename_all(funs(str_replace_all(., "NONFAMILY HOUSEHOLDS!!", ""))) %>%
+  rename_all(funs(str_replace_all(., "HOUSEHOLD INCOME BY RACE AND HISPANIC OR LATINO ORIGIN OF HOUSEHOLDER!!", "")))
+  
+head(income_2019[,1:4])
+colnames(income_2019)[37:45]
 ```
 
 ## Wisconsin Public Library Data
   
 [Link to Library Data](https://dpi.wi.gov/pld/data-reports/service-data)
 
-This dataset includes information about Public Libraries in Wisconsin. It includes information about funding, location, hours, resources and how the public utilizes the library. This dataset contains 102 columns so for ease of readibility we will only show 17 column names that detail the usage of the library programs.  
+This dataset includes information about Public Libraries in Wisconsin. It includes information about funding, location, hours, resources and how the public utilizes the library. This dataset contains 102 columns so for ease of readibility we will only show 17 additional column names that detail the usage of the library programs.  
 
 ```{r}
 library_data <- readxl::read_excel("..\\data\\public_library_service_data_2019.xlsx", sheet = "2019 PRELIMINARY DATA", skip = 1) %>%
@@ -54,28 +76,4 @@ library_data <- readxl::read_excel("..\\data\\public_library_service_data_2019.x
 
 head(library_data[,1:4])
 colnames(library_data)[27:44]
-```
-
-
-
-```{r, echo = FALSE, include=FALSE}
-## Robert's Code 
-# library(readr)
-# library(tidyverse)
-# library(dplyr)
-# library(stringr)
-```
-
-```{r, include=FALSE}
-# income_2019 <- read_csv("..\\data\\WICounty2019Demographics.csv", 
-#     na = "N",skip=1)%>%
-#   select(-id)%>%
-#   select(-matches("Margin"),-matches("Distribution"),-matches("FAMILY SIZE"))
-# colnames(income_2019) = gsub('Estimate!!Number!!HOUSEHOLD INCOME BY RACE AND HISPANIC OR LATINO ORIGIN OF HOUSEHOLDER!!', '', colnames(income_2019), fixed=TRUE)
-# colnames(income_2019) = gsub('Estimate!!Number!!HOUSEHOLD INCOME BY AGE OF HOUSEHOLDER!!', '', colnames(income_2019), fixed=TRUE)
-# colnames(income_2019) = gsub('Estimate!!Number!!FAMILIES!!', '', colnames(income_2019), fixed=TRUE)
-# colnames(income_2019) = gsub('Estimate!!Number!!NONFAMILY HOUSEHOLDS!!', '', colnames(income_2019), fixed=TRUE)
-# colnames(income_2019) = gsub('Estimate!!Number!!', '', colnames(income_2019), fixed=TRUE)
-# head(income_2019)
-# head(WI_data)
 ```
