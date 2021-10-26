@@ -2,20 +2,11 @@
 title: "DataSource"
 author: "Celina Ough, Maya Tunney, Robert George"
 date: "10/25/2021"
-output: html_document
+output: github_document
 ---
-
-## Short description of County Data  
-
-This is census data with Demographic data from counties in Wisconsin. It includes information on race, age, and sex. 
 
 This Census Data contains information on the breakdown of household types and income for counties in Wisconsin. For example, this data includes the median income for families, single people, and married couples in the county. 
 
-This dataset includes information about Public Libraries in Wisconsin. It includes information about funding, location, hours, resources and how the public utilizes the library. 
-
-## Short description of Library Data 
-
-TBD
 
 ```{r, include=FALSE}
 rm(list=ls())
@@ -26,16 +17,32 @@ library(stringr)
 ```
 
 
+## Wisconsin Demographic Data  
+  
+[Link to County Demographics](https://data.census.gov/cedsci/table?q=Race%20demographics&g=0400000US55%240600000&tid=ACSDP1Y2019.DP05&moe=false&hidePreview=false)
+  
+This is census data about the demographics of counties in Wisconsin. It includes information on race, age, and sex. There are many columns in the dataset since each category (race, age, sex) is is divided into many categories so for ease of readibility we will only show the first sixteen column names which detail the sex and age categories.   
+
 ```{r, message=FALSE, warning=FALSE}
 WI_data <- read_csv("..\\data\\WICounty2019Demographics.csv", skip = 1) %>%
   select(-matches("Margin"), 
          -matches("Percent"), 
-         -matches("ratio"), 
-         -id)
+         -matches("ratio"),
+         -id) %>%
+  select(matches("Total population"), 
+         -matches("_1")) %>%
+  rename_all(funs(str_replace_all(., "Estimate!!", ""))) %>%
+  rename_all(funs(str_replace_all(., "Total population!!", "")))
 
-head(WI_data)
+head(WI_data[,1:4])
+colnames(WI_data)[1:16]
 ```
 
+## Wisconsin Public Library Data
+  
+[Link to Library Data](https://dpi.wi.gov/pld/data-reports/service-data)
+
+This dataset includes information about Public Libraries in Wisconsin. It includes information about funding, location, hours, resources and how the public utilizes the library. This dataset contains 102 columns so for ease of readibility we will only show 17 column names that detail the usage of the library programs.  
 
 ```{r}
 library_data <- readxl::read_excel("..\\data\\public_library_service_data_2019.xlsx", sheet = "2019 PRELIMINARY DATA", skip = 1) %>%
@@ -43,19 +50,16 @@ library_data <- readxl::read_excel("..\\data\\public_library_service_data_2019.x
   select(-c("Library ID", "Branches", "15. No. of Bookmobiles Owned", 
             "Other Service Outlets", "Books-by-Mail", "Joint Library under s.43.53 1=Yes", 
             "Circulation Count Method: Actual / Survey", "Locale Code"), 
-         -matches("Outlay"), -matches("Access Denied"), -matches("Databases"))
+         -matches("Outlay"), -matches("Access Denied"), -matches("Databases")) 
 
-head(library_data)
+head(library_data[,1:4])
+colnames(library_data)[27:44]
 ```
 
 
 
-## Robert's Code 
-
-### Library funding and demographics by Wisconsin county
-
-This Census Data contains information on the breakdown of household types and income for counties in Wisconsin. For example, this data includes the median income for families, single people, and married couples in the county, as well as median income by race. 
 ```{r, echo = FALSE, include=FALSE}
+## Robert's Code 
 # library(readr)
 # library(tidyverse)
 # library(dplyr)
@@ -74,13 +78,4 @@ This Census Data contains information on the breakdown of household types and in
 # colnames(income_2019) = gsub('Estimate!!Number!!', '', colnames(income_2019), fixed=TRUE)
 # head(income_2019)
 # head(WI_data)
-```
-
-
-
-This dataset includes information about Public Libraries in Wisconsin. It includes information about funding, location, hours, resources and how the public utilizes the library. 
-```{r, include=FALSE}
-# library(readxl)
-# libraries_2019 <- read_excel("PRELIMINARY_2019_public_library_service_data.xlsx", na = "-", skip = 1)[-1,]
-# head(libraries_2019)
 ```
