@@ -23,19 +23,14 @@ This is census data about the demographics of counties in Wisconsin. It includes
 
 ```{r, message=FALSE, warning=FALSE}
 demo_2019 <- read_csv("..\\data\\WICounty2019Demographics.csv", skip = 1) %>%
-  select(-matches("Margin"), 
-         -matches("Percent"), 
-         -matches("ratio"),
-         -id) %>%
-  select(matches("Total population"), 
-         -matches("_1")) %>%
-  rename_all(funs(str_replace_all(., "Estimate!!", ""))) %>%
-  rename_all(funs(str_replace_all(., "Total population!!", "")))
+  select(-matches("(Margin)|(Percent)|(ratio)|(_1)"), -id) %>%
+  select(matches("Total population")) %>%
+  rename_all(funs(str_replace_all(., "((Estimate!!)|(Total population!!)+)", ""))) 
 
 head(demo_2019[,1:4])
 colnames(demo_2019)[1:16]
 ```
-
+8 78
 
 ## Wisconsin Income Data  
 
@@ -45,21 +40,13 @@ This Census Data contains information on the breakdown of household types and in
 
 ```{r, message = FALSE, warning=FALSE}
 income_2019 <- read_csv("..\\data\\WICounty2019Income.csv", na = "N", skip=1) %>%
-  select(-id, 
-         -matches("Margin"),
-         -matches("Distribution"),
-         -matches("FAMILY SIZE")) %>%
-  rename_all(funs(str_replace_all(., "Estimate!!", ""))) %>%
-  rename_all(funs(str_replace_all(., "Number!!", ""))) %>%
-  rename_all(funs(str_replace_all(., "FAMILIES!!", ""))) %>%
-  rename_all(funs(str_replace_all(., "HOUSEHOLD INCOME BY AGE OF HOUSEHOLDER!!", ""))) %>%
-  rename_all(funs(str_replace_all(., "NONFAMILY HOUSEHOLDS!!", ""))) %>%
-  rename_all(funs(str_replace_all(., "HOUSEHOLD INCOME BY RACE AND HISPANIC OR LATINO ORIGIN OF HOUSEHOLDER!!", "")))
-  
+  select(-id,-matches("(Margin)|(Distribution)|(FAMILY SIZE)")) %>%
+  rename_all(funs(str_replace_all(., "((Estimate!!)|(Number!!)|(FAMILIES!!)|(HOUSEHOLD INCOME BY AGE OF HOUSEHOLDER!!)|(NONFAMILY HOUSEHOLDS!!)|(HOUSEHOLD INCOME BY RACE AND HISPANIC OR LATINO ORIGIN OF HOUSEHOLDER!!))+", "")))
+
 head(income_2019[,1:4])
 colnames(income_2019)[37:45]
 ```
-
+24 69
 ## Wisconsin Public Library Data
   
 [Link to Library Data](https://dpi.wi.gov/pld/data-reports/service-data)
@@ -77,3 +64,8 @@ library_data <- readxl::read_excel("..\\data\\public_library_service_data_2019.x
 head(library_data[,1:4])
 colnames(library_data)[27:44]
 ```
+
+
+
+
+
