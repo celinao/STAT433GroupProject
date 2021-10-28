@@ -1,0 +1,74 @@
+---
+title: "Main Project"
+author: "Celina"
+date: "10/28/2021"
+output: html_document
+---
+
+```{r, include=FALSE}
+# Necessary Packages 
+rm(list=ls())
+library(readr)
+library(tidyverse)
+library(dplyr)
+library(stringr)
+```
+
+
+# Downloading the Data and joining  
+```{r, message=FALSE, warning=FALSE}
+#Demographic Data
+demo_2019 <- read_csv("data\\WICounty2019Demographics.csv", skip = 1) %>%
+  select(-matches("(Margin)|(Percent)|(ratio)|(_1)"), -id) %>%
+  select(matches("(Total population)|(Geographic Area)")) %>%
+  rename_all(funs(str_replace_all(., "((Estimate!!)|(Total population!!)+)", ""))) %>%
+  rename(County = "Geographic Area Name")
+
+#Income Data
+income_2019 <- read_csv("data\\WICounty2019Income.csv", na = "N", skip=1) %>%
+  select(-id,-matches("(Margin)|(Distribution)|(FAMILY SIZE)")) %>%
+  rename_all(funs(str_replace_all(., "((Estimate!!)|(Number!!)|(FAMILIES!!)|(HOUSEHOLD INCOME BY AGE OF HOUSEHOLDER!!)|(NONFAMILY HOUSEHOLDS!!)|(HOUSEHOLD INCOME BY RACE AND HISPANIC OR LATINO ORIGIN OF HOUSEHOLDER!!))+", ""))) %>%
+  rename(County = "Geographic Area Name")
+
+#Library Data
+library_data <- readxl::read_excel("data\\public_library_service_data_2019.xlsx", sheet = "2019 PRELIMINARY DATA", skip = 1) %>%
+  slice(-1) %>%
+  select(-c("Library ID", "Branches", "15. No. of Bookmobiles Owned", 
+            "Other Service Outlets", "Books-by-Mail", "Joint Library under s.43.53 1=Yes", 
+            "Circulation Count Method: Actual / Survey", "Locale Code"), 
+         -matches("Outlay"), -matches("Access Denied"), -matches("Databases")) 
+
+
+data <- library_data %>%
+  left_join(demo_2019, by="County") %>%
+  left_join(income_2019, by="County") 
+
+dim(data)
+```
+
+
+
+```{r}
+colnames(library_data)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
