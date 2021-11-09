@@ -18,11 +18,12 @@ library(stringr)
 # Downloading the Data and joining  
 ```{r, message=FALSE, warning=FALSE}
 #Demographic Data
-demo_2019 <- read_csv("data\\WICounty2019Demographics.csv", skip = 1) %>%
+demo_2019 <- read_csv("data\\WICounty2019Demographics__.csv", skip = 1) %>%
   select(-matches("(Margin)|(Percent)|(ratio)|(_1)"), -id) %>%
   select(matches("(Total population)|(Geographic Area)")) %>%
   rename_all(funs(str_replace_all(., "((Estimate!!)|(Total population!!)+)", ""))) %>%
-  rename(County = "Geographic Area Name") 
+  rename(County = "Geographic Area Name") %>%
+  mutate(County = sub(" County, Wisconsin", "", County))
 
 #Income Data
 income_2019 <- read_csv("data\\WICounty2019Income.csv", na = "N", skip=1) %>%
@@ -41,13 +42,10 @@ library_data <- readxl::read_excel("data\\public_library_service_data_2019.xlsx"
 
 
 data <- library_data %>%
-  #left_join(demo_2019, by="County") #%>%
+  left_join(demo_2019, by="County") %>%
   inner_join(income_2019, by="County") 
 
-
 ```
-# left join (382, 170)
-# inner (162, 170)
 
 
 
@@ -84,10 +82,7 @@ computer_data %>%
 ```
 
 
-```{r}
-head(demo_2019)
 
-```
 
 
 
