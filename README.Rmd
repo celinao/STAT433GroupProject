@@ -6,3 +6,19 @@ output: github_document
 ---
 
 STAT433 Group Project Repo
+
+## Potential Topics we could investigate in the Library Data  
+
+**Funding**  
+- Sources of funding (Municipal, State, Federal, Other) vs. Median County Income  
+- Salary of Librarians  
+
+**Library supplies**  
+- 
+
+**Usage of Libraries** 
+- Hours open per week (Winter, Summer, Annual)  
+
+
+**Children's Resouces** 
+
