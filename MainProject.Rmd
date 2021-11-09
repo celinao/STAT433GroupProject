@@ -18,7 +18,7 @@ library(stringr)
 # Downloading the Data and joining  
 ```{r, message=FALSE, warning=FALSE}
 #Demographic Data
-demo_2019 <- read_csv("data\\WICounty2019Demographics__.csv", skip = 1) %>%
+demo_2019 <- read_csv("data\\WICounty2019Demographics.csv", skip = 1) %>%
   select(-matches("(Margin)|(Percent)|(ratio)|(_1)"), -id) %>%
   select(matches("(Total population)|(Geographic Area)")) %>%
   rename_all(funs(str_replace_all(., "((Estimate!!)|(Total population!!)+)", ""))) %>%
