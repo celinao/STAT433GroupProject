@@ -21,25 +21,42 @@ library(stringr)
 demo_2019 <- read_csv("data\\WICounty2019Demographics.csv", skip = 1) %>%
   select(-matches("(Margin)|(Percent)|(ratio)|(_1)"), -id) %>%
   select(matches("(Total population)|(Geographic Area)")) %>%
+  select(-matches("Hispanic or Latino \\(of any race\\)!!"), 
+         -matches("American Indian and Alaska Native!!"),
+         -matches("Asian!!"),
+         -matches("Native Hawaiian and Other Pacific Islander!!"),
+         -matches("Two or more races!"), 
+         -matches("and over$"), 
+         -matches("Race alone or in combination with one or more other races!!")) %>% 
   rename_all(funs(str_replace_all(., "((Estimate!!)|(Total population!!)+)", ""))) %>%
   rename(County = "Geographic Area Name") %>%
   mutate(County = sub(" County, Wisconsin", "", County))
 
 #Income Data
 income_2019 <- read_csv("data\\WICounty2019Income.csv", na = "N", skip=1) %>%
-  select(-id,-matches("(Margin)|(Distribution)|(FAMILY SIZE)")) %>%
-  rename_all(funs(str_replace_all(., "((Estimate!!)|(Number!!)|(FAMILIES!!)|(HOUSEHOLD INCOME BY AGE OF HOUSEHOLDER!!)|(NONFAMILY HOUSEHOLDS!!)|(HOUSEHOLD INCOME BY RACE AND HISPANIC OR LATINO ORIGIN OF HOUSEHOLDER!!))+", ""))) %>%
+  select(-id,-matches("(Margin)|(Distribution)")) %>%
+  select(-matches("race"), -matches("FAMILIES!!families!!")) %>%
+  rename_all(funs(str_replace_all(., "((Estimate!!)|(Number!!))+", ""))) %>%
   rename(County = "Geographic Area Name")%>%
   mutate(County = sub(" County, Wisconsin", "", County))
 
 #Library Data
 library_data <- readxl::read_excel("data\\public_library_service_data_2019.xlsx", sheet = "2019 PRELIMINARY DATA", skip = 1) %>%
   slice(-1) %>%
-  select(-c("Library ID", "Branches", "15. No. of Bookmobiles Owned", 
-            "Other Service Outlets", "Books-by-Mail", "Joint Library under s.43.53 1=Yes", 
-            "Circulation Count Method: Actual / Survey", "Locale Code"), 
-         -matches("Outlay"), -matches("Access Denied"), -matches("Databases")) 
-
+  select(-c(
+            "Library ID", 
+            "Municipality",
+            "Public Library System",
+            "Branches", 
+            "15. No. of Bookmobiles Owned", 
+            "Other Service Outlets", 
+            "Books-by-Mail", 
+            "Joint Library under s.43.53 1=Yes", 
+            "Participating Municipalities", 
+            "Circulation Count Method: Actual / Survey", 
+            "Locale Code", 
+            "Other Material Description"), 
+         -matches("(Outlay)|(Access Denied)|(Databases)|(Circulation)|(Collection Retrievals)")) 
 
 data <- library_data %>%
   left_join(demo_2019, by="County") %>%
@@ -48,16 +65,15 @@ data <- library_data %>%
 ```
 
 
-
 # Celina just playing around with the data and finding visualizations
 
 ```{r}
 # Computer Usage and Income Levels 
 
 computer_data <- data %>%
-  select("County", `Median income (dollars)!!Households`, `Resident Population`, `Additional County Population`, `Library Visits`, `Uses of Public Internet Computers`, `Wireless Internet Uses`) %>%
+  select("County", `Median income (dollars)!!FAMILIES!!Families`, `Resident Population`, `Additional County Population`, `Library Visits`, `Uses of Public Internet Computers`, `Wireless Internet Uses`) %>%
   group_by(County) %>%
-  summarise("Median Income" = mean(`Median income (dollars)!!Households`, na.rm = TRUE), 
+  summarise("Median Income" = mean(`Median income (dollars)!!FAMILIES!!Families`, na.rm = TRUE), 
             "Population" = sum(as.numeric(`Resident Population`), na.rm = TRUE) + sum(as.numeric(`Additional County Population`), na.rm = TRUE), 
             "Library Visits" = mean(as.numeric(`Library Visits`)), 
             "Computer Usage" = mean(as.numeric(`Uses of Public Internet Computers`)), 
@@ -83,19 +99,23 @@ computer_data %>%
 
 
 
+```{r}
+library_data %>%
+  left_join(demo_2019, by="County") %>% 
+  group_by(County) %>%
+  summarise(count = n())
 
+library_data %>%
+  inner_join(income_2019, by="County") %>% 
+  group_by(County) %>%
+  summarise(count = n())
 
-
-
-
-
-
-
-
-
-
-
-
+library_data %>% 
+  left_join(demo_2019, by="County") %>% 
+  inner_join(income_2019, by="County") %>% 
+  group_by(County) %>%
+  mutate(count = n()) 
+```
 
 
 
