@@ -81,7 +81,37 @@ computer_data %>%
 
 ```
 
+```{r}
+#Cleaned the data a bit, excluded all but our 8 target counties (please LMK if you don't like this approach). Chose 17 features that I thought looked interesting and renamed them.
 
+counties_here = data%>%
+  group_by(County)%>%
+  drop_na(`One race!!Black or African American`)%>%
+  summarize(first(County))
+counties = counties_here$County
+
+spec_data = data%>%
+  filter(County %in% counties)%>%
+  select(`Public Library`, County, `Number of Public Use Computers`, `Library Visits`, `Total Number of Programs`, `Total Income`, `Uses of Public Internet Computers`, Total_population, `One race!!Black or African American`, `One race!!Asian`, `One race!!White`, `Estimate!!HISPANIC OR LATINO AND RACE!!Total population`, `Median income (dollars)!!Households`, `Median income (dollars)!!Households!!One race--!!Black or African American`, `Median income (dollars)!!Households!!One race--!!Asian`, `Median income (dollars)!!Households!!Hispanic or Latino origin (of any race)`, `Median income (dollars)!!Households!!White alone, not Hispanic or Latino`)%>%
+  rename(library = `Public Library`,
+         number_computers = `Number of Public Use Computers`,
+         library_visits = `Library Visits`,
+         number_programs = `Total Number of Programs`,
+         funding = `Total Income`,
+         computer_usage = `Uses of Public Internet Computers`,
+         pop_black = `One race!!Black or African American`,
+         pop_asian = `One race!!Asian`,
+         pop_white = `One race!!White`,
+         pop_hispanic = `Estimate!!HISPANIC OR LATINO AND RACE!!Total population`,
+         med_income_agg = `Median income (dollars)!!Households`,
+         med_income_black = `Median income (dollars)!!Households!!One race--!!Black or African American`,
+         med_income_asian = `Median income (dollars)!!Households!!One race--!!Asian`,
+         med_income_hisp = `Median income (dollars)!!Households!!Hispanic or Latino origin (of any race)`,
+         med_income_white =`Median income (dollars)!!Households!!White alone, not Hispanic or Latino`)
+         
+         
+spec_data[,3:17] = sapply(spec_data[,3:17],as.numeric)
+```
 
 
 
