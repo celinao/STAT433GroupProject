@@ -59,13 +59,97 @@ library_data <- readxl::read_excel("data\\public_library_service_data_2019.xlsx"
          -matches("(Outlay)|(Access Denied)|(Databases)|(Circulation)|(Collection Retrievals)")) 
 
 data <- library_data %>%
+  na_if("0") %>%
   left_join(demo_2019, by="County") %>%
   inner_join(income_2019, by="County") 
 
 ```
 
 
-# Celina just playing around with the data and finding visualizations
+#### General Introduction: Understanding the data and where funding goes
+
+________________________ **READ ME** ______________________________________
+
+I've created three new datasets: 
+1. `programs_staff` = Number of Programs and Staff per County 
+2. `Library_income_costs` = Total Income and Costs for library (All Numbers here are in Dollars)  
+3. `computer_usage_data` = All Computer Usage by county (column names explain more)
+
+Notes for all three datasets: 
+1. I've renamed all the columns to remove spaces so we don't have to use ` anymore and RStudio can autocomplete the variables  
+2. I've dropped all the rows that contain missind data for each new dataset. We can add that back in later if we want but, for now they are dropped. 
+3. All numbers in the new datasets are actual numbers and not character strings so you can use math functions on them. 
+
+
+```{r}
+programs_staff <- data %>%
+  select(County, matches("(Number .*Program)|(Librarians)|(Staff)"), "Total Income") %>%
+  drop_na() %>%
+  rename_all(funs(str_replace_all(., " ", "_"))) %>%
+  mutate(across(.cols=-c(County), as.numeric)) %>%
+  group_by(County) %>%
+  mutate(across(.cols=everything(), sum)) %>%
+  unique()
+```
+
+```{r}
+
+library_income_costs <- data %>%
+  select(County, "Total Income", 
+         "Salaries & Wages", 
+         "Print Materials", 
+         "Electronic format", 
+         "Audiovisual Materials", 
+         "Contracted Services", 
+         "Other Operating Expenditures", 
+         "Total Operating Expenditures", 
+         "Resident Support per Capita (Local Revenues and Resident Population)") %>%
+  rename_all(funs(str_replace_all(., " ", "_"))) %>%
+  rename(Resident_Support_per_Capita = `Resident_Support_per_Capita_(Local_Revenues_and_Resident_Population)`) %>%
+  drop_na() %>%
+  mutate(across(.cols=-c(County), as.numeric)) %>%
+  group_by(County) %>%
+  mutate(across(.cols=everything(), sum)) %>%
+  unique()
+```
+
+
+```{r}
+# Note: Library focuses activies on Children (0-11), Young Adults (12-18), and other. 
+# They only recorded the Number of Uses of computers, they didn't divide it based on if they had access to Wifi
+# Not all locations record Wireless Uses or Library Visits but, I thought they could be useful. 
+
+computer_Usage_Data 
+data %>%
+  select(County, 
+         matches("SEX AND AGE"), 
+         -matches("(Male)|(Female)|(Median)"), 
+         "Median income (dollars)!!FAMILIES!!Families", 
+         "Median income (dollars)!!NONFAMILY HOUSEHOLDS!!Nonfamily households", 
+          matches("Computers"), "Wireless Internet Uses", 
+         "Library Visits") %>%
+  drop_na() %>%
+  rename(Total_Population = "SEX AND AGE!!Total population", 
+         Income_Familes = "Median income (dollars)!!FAMILIES!!Families", 
+         Income_NonFamily = "Median income (dollars)!!NONFAMILY HOUSEHOLDS!!Nonfamily households") %>%
+  rename_all(funs(str_replace_all(., "((SEX AND AGE!!)|( years))+", ""))) %>%
+  rename_all(funs(str_replace_all(., " ", "_"))) %>%
+  mutate(across(.cols=-c(County), as.numeric)) %>%
+  group_by(County)  %>%
+  mutate(across(.cols=everything(), sum), 
+         Uses_per_Computer = Uses_of_Public_Internet_Computers/Number_of_Public_Use_Computers, 
+         Uses_per_Computer_with_Internet = Uses_of_Public_Internet_Computers/Number_of_Public_Use_Computers_with_Internet_Access)%>%
+  unique()
+  
+```
+
+
+
+
+
+
+
+# Computer Usage with Income Levels 
 
 ```{r}
 # Computer Usage and Income Levels 
@@ -97,33 +181,32 @@ computer_data %>%
 
 ```
 
-```{r}
-library_data %>%
-  left_join(demo_2019, by="County") %>% 
-  group_by(County) %>%
-  summarise(count = n())
-
-library_data %>%
-  inner_join(income_2019, by="County") %>% 
-  group_by(County) %>%
-  summarise(count = n())
-
-library_data %>% 
-  left_join(demo_2019, by="County") %>% 
-  inner_join(income_2019, by="County") %>% 
-  group_by(County) %>%
-  mutate(count = n()) 
-```
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Old code 
 
 
 When I reformatted the data and removed the income by race column since there wasn't a lot of data about it. I think we could add it back in if we think it is necessary but, for now I'm just putting it in a separate section.  
 I'm getting 3 counties instead of 8 but, this is probably why we were miscommunicating in groupMe.  
 
 
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
 demo_2019 <- read_csv("data\\WICounty2019Demographics.csv", skip = 1) %>%
   select(-matches("(Margin)|(Percent)|(ratio)|(_1)"), -id) %>%
   select(matches("(Total population)|(Geographic Area)")) %>%
@@ -198,3 +281,25 @@ spec_data[,3:17] = sapply(spec_data[,3:17],as.numeric)
 spec_data 
 ```
 
+```{r, echo=FALSE}
+library_data %>%
+  left_join(demo_2019, by="County") %>% 
+  group_by(County) %>%
+  summarise(count = n())
+
+library_data %>%
+  inner_join(income_2019, by="County") %>% 
+  group_by(County) %>%
+  summarise(count = n())
+
+library_data %>% 
+  left_join(demo_2019, by="County") %>% 
+  inner_join(income_2019, by="County") %>% 
+  group_by(County) %>%
+  mutate(count = n()) 
+```
+
+
+
+
+# 
