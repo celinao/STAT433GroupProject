@@ -14,16 +14,18 @@ the number of computers and the age demographics of the county.
 **Karl's Comments** 
 - So you're using library funding as a proxy for wealth/socieo-economic level  
 - Have you considered added wealth to see if it cancels out the difference? 
-- DAG (County Wealth, Library Funding, # Computers, Computer Use, Age) 
-	- County Wealth -> Lib Funding, # Computers, Computer Use 
-	- Library Funding -> # Computers, Computer Use **Main Treatment: Library Funding -> Computer Use** 
-	- # Computers -> Computer Use 
+- DAG (County Wealth, Library Funding, Number of Computers, Computer Use, Age) 
+	- County Wealth -> Lib Funding, Number of Computers, Computer Use 
+	- Library Funding -> # Computers, Computer Use 
+		- **Main Treatment: Library Funding -> Computer Use** 
+	- Number of Computers -> Computer Use 
 	- Age -> Library Funding, Computer Use 
 - County Wealth and Age are Confounders: 
 	- County Wealth causes Library Funding and Computer Use. Therefore, they will be correlated. 
 	- Multiple Linear Regression: Put County Wealth and Library Funding as featuers for Computer Use. If County Wealth is still positive it says that Library Funding is still correlated even if you remove county wealth. 
-- # of Computers is a mediator 
+- Number of Computers is a mediator 
 - Maybe try to use County Wealth as a treatment instead of Library Funding. 
+
 
 ---
 ### How the funding is allocated to libraries 
@@ -47,6 +49,7 @@ Where does increased funding go?
 
 #### Shiny Appearance 
 - Map by County (color by xyz) 
+- We could have all the variables with a checkbox. Then click to include the variables -> print plots and stats
 
 #### Linear Model + Age/Income 
 Type in Income + Age -> Return Computer Usage Statistic 
