@@ -7,6 +7,10 @@ STAT433 Group Project Repo
 
 # Thesis 
 
+Among wisconsin counties, the libraries with higher funding have lower 
+computer usage compared to libraries with lower funding after controlling for 
+the number of computers and the age demographics of the county. 
+
 How everything is correlated 
 
 How the funding is allocated to libraries 
