@@ -1,0 +1,120 @@
+---
+title: "Draft"
+author: "Celina"
+date: "11/15/2021"
+output: html_document
+---
+
+```{r, include=FALSE}
+# Necessary Packages 
+rm(list=ls())
+library(readr)
+library(tidyverse)
+library(dplyr)
+library(stringr)
+```
+
+```{r, message=FALSE, warning=FALSE, include = FALSE}
+#Demographic Data
+demo_2019 <- read_csv("..\\data\\WICounty2019Demographics.csv", skip = 1) %>%
+  select(-matches("(Margin)|(Percent)|(ratio)|(_1)"), -id) %>%
+  select(matches("(Total population)|(Geographic Area)")) %>%
+  select(-matches("Hispanic or Latino \\(of any race\\)!!"), 
+         -matches("American Indian and Alaska Native!!"),
+         -matches("Asian!!"),
+         -matches("Native Hawaiian and Other Pacific Islander!!"),
+         -matches("Two or more races!"), 
+         -matches("and over$"), 
+         -matches("Race alone or in combination with one or more other races!!")) %>% 
+  rename_all(funs(str_replace_all(., "((Estimate!!)|(Total population!!)+)", ""))) %>%
+  rename(County = "Geographic Area Name") %>%
+  mutate(County = sub(" County, Wisconsin", "", County))
+
+#Income Data
+income_2019 <- read_csv("..\\data\\WICounty2019Income.csv", na = "N", skip=1) %>%
+  select(-id,-matches("(Margin)|(Distribution)")) %>%
+  select(-matches("race"), -matches("FAMILIES!!families!!")) %>%
+  rename_all(funs(str_replace_all(., "((Estimate!!)|(Number!!))+", ""))) %>%
+  rename(County = "Geographic Area Name")%>%
+  mutate(County = sub(" County, Wisconsin", "", County))
+
+#Library Data
+library_data <- readxl::read_excel("..\\data\\public_library_service_data_2019.xlsx", sheet = "2019 PRELIMINARY DATA", skip = 1) %>%
+  slice(-1) %>%
+  select(-c(
+            "Library ID", 
+            "Municipality",
+            "Public Library System",
+            "Branches", 
+            "15. No. of Bookmobiles Owned", 
+            "Other Service Outlets", 
+            "Books-by-Mail", 
+            "Joint Library under s.43.53 1=Yes", 
+            "Participating Municipalities", 
+            "Circulation Count Method: Actual / Survey", 
+            "Locale Code", 
+            "Other Material Description"), 
+         -matches("(Outlay)|(Access Denied)|(Databases)|(Circulation)|(Collection Retrievals)")) 
+
+data <- library_data %>%
+  na_if("0") %>%
+  left_join(demo_2019, by="County") %>%
+  inner_join(income_2019, by="County") 
+
+```
+```{r, include = FALSE}
+
+library_income_costs <- data %>%
+  select(County, "Total Income", 
+         "Salaries & Wages", 
+         "Print Materials", 
+         "Electronic format", 
+         "Audiovisual Materials", 
+         "Contracted Services", 
+         "Other Operating Expenditures", 
+         "Total Operating Expenditures", 
+         "Resident Support per Capita (Local Revenues and Resident Population)") %>%
+  rename_all(funs(str_replace_all(., " ", "_"))) %>%
+  rename(Resident_Support_per_Capita = `Resident_Support_per_Capita_(Local_Revenues_and_Resident_Population)`) %>%
+  drop_na() %>%
+  mutate(across(.cols=-c(County), as.numeric)) %>%
+  group_by(County) %>%
+  mutate(across(.cols=everything(), sum)) %>%
+  unique()
+
+computer_Usage_Data <- data %>%
+  select(County, 
+         matches("SEX AND AGE"), 
+         -matches("(Male)|(Female)|(Median)"), 
+         "Median income (dollars)!!FAMILIES!!Families", 
+         "Median income (dollars)!!NONFAMILY HOUSEHOLDS!!Nonfamily households", 
+          matches("Computers"), "Wireless Internet Uses", 
+         "Library Visits") %>%
+  drop_na() %>%
+  rename(Total_Population = "SEX AND AGE!!Total population", 
+         Income_Familes = "Median income (dollars)!!FAMILIES!!Families", 
+         Income_NonFamily = "Median income (dollars)!!NONFAMILY HOUSEHOLDS!!Nonfamily households") %>%
+  rename_all(funs(str_replace_all(., "((SEX AND AGE!!)|( years))+", ""))) %>%
+  rename_all(funs(str_replace_all(., " ", "_"))) %>%
+  mutate(across(.cols=-c(County), as.numeric)) %>%
+  group_by(County)  %>%
+  mutate(across(.cols=everything(), sum), 
+         Uses_per_Computer = Uses_of_Public_Internet_Computers/Number_of_Public_Use_Computers, 
+         Uses_per_Computer_with_Internet = Uses_of_Public_Internet_Computers/Number_of_Public_Use_Computers_with_Internet_Access)%>%
+  unique()
+```
+
+
+```{r}
+computer_Usage_Data %>%
+  left_join(library_income_costs, by="County") %>%
+  select("Total_Population", "Uses_per_Computer", "Income_Familes", "Income_NonFamily", "County") %>%
+  ggplot(aes(x = Income_Familes, y = Uses_per_Computer/Total_Population)) + 
+  geom_point() + 
+  labs(y = "Ratio of Library Computer Usage to County Population", x = "Family Income", title = "Relationship of County Wealth to Library Computer Usage") + 
+  geom_smooth(method = lm, se=FALSE, color="red")
+
+```
+
+**Description** 
+The plot shows the relationship of family income to the usage of computers in public libraries. The x-axis displays the median family income of the county as a symbol of the wealth of the community. The y-axis show the usage of library computers. This number was derived by dividing the number of computer usages per library by the number of computers and the population of the county so that the data would be reflective of income level as opposed to library or county size. The red trendline clearly shows that as family income increases the usage of library computers decreases. The key message is that as the income of the county, thus the wealth of the county, increases the useage of library computers decreases. This reflects our thesis that states that libraries in wealthier counties have lower computer usage. 

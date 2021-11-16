@@ -119,8 +119,7 @@ library_income_costs <- data %>%
 # They only recorded the Number of Uses of computers, they didn't divide it based on if they had access to Wifi
 # Not all locations record Wireless Uses or Library Visits but, I thought they could be useful. 
 
-computer_Usage_Data 
-data %>%
+computer_Usage_Data <- data %>%
   select(County, 
          matches("SEX AND AGE"), 
          -matches("(Male)|(Female)|(Median)"), 
