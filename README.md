@@ -1,11 +1,11 @@
 README
 ================
-Celina
-10/25/2021
+--- 
+> Presenting Thursday, December 2nd 
 
-STAT433 Group Project Repo
+---  
 
-# Thesis 
+## Thesis 
 
 Among wisconsin counties, the libraries with higher funding have lower 
 computer usage compared to libraries with lower funding after controlling for 
