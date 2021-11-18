@@ -168,6 +168,9 @@ computer_usage_graph %>%
   labs(x = "Income", y = "Wireless Usage", title = "Wireless Usage v. County Population") + 
   geom_smooth(method = lm, se=FALSE, color="red") + 
   facet_wrap(~Income_Type)
+
+plot(x = computer_usage_graph$Income, y = computer_usage_graph$Wireless_Internet_Uses/computer_usage_graph$Total_Population, 
+  xlab = "Income", ylab = "Wireless Usage", main = "Wireless Usage v. County Population")
 ```
 ```{r}
 # Some outlining data points 
@@ -219,6 +222,15 @@ programs_staff %>%
 
 
 
+```{r}
+# runExample("01_hello")      # a histogram
+# runExample("02_text")       # tables and data frames
+# runExample("03_reactivity") # a reactive expression
+# runExample("04_mpg")        # global variables
+# runExample("05_sliders")    # slider bars
+# runExample("06_tabsets")    # tabbed panels
+# runExample("07_widgets")    # help text and submit buttons
+```
 
 
 
