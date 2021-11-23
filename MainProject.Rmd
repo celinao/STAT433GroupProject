@@ -257,6 +257,78 @@ map_data("county")%>%
 
 ```
 
+```{r}
+data2 <- data %>%
+  select(County, 
+         `SEX AND AGE!!Total population`, 
+         `SEX AND AGE!!Median age (years)`, 
+         `Median income (dollars)!!FAMILIES!!Families`, 
+         `Median income (dollars)!!NONFAMILY HOUSEHOLDS!!Nonfamily households`, 
+         `Library Visits`, 
+         `Total Income`, 
+         `Number of Public Use Computers`, 
+         `Uses of Public Internet Computers`) %>%
+  drop_na() %>%
+  mutate(across(.cols=-c(County), as.numeric)) %>%
+  rename(Total_Population = (`SEX AND AGE!!Total population`), 
+         Median_Age = (`SEX AND AGE!!Median age (years)`), 
+         Family_Income = `Median income (dollars)!!FAMILIES!!Families`, 
+         NonFamily_Income = `Median income (dollars)!!NONFAMILY HOUSEHOLDS!!Nonfamily households`) %>%
+  group_by(County) %>%
+  mutate(num_libraries = n(), 
+         Library_Visits = sum(`Library Visits`), 
+         Library_Income = sum(`Total Income`), 
+         Num_Computers = sum(`Number of Public Use Computers`), 
+         Computer_Usage = sum(`Uses of Public Internet Computers`)) %>%
+  select(-matches(" ")) %>%
+  unique()
+
+ggplot(data2, aes(Family_Income/1000)) + 
+  geom_histogram(color = "black", fill = "grey") + 
+  labs(x = "Family Income (1k dollars)", y = "Count", title = "Median Family Income per County") +
+  scale_x_continuous(breaks = seq(0, 120, 5))
+
+ggplot(data2, aes(NonFamily_Income/1000)) + 
+  geom_histogram(color = "black", fill = "grey") + 
+  labs(x = "Non-Family Income (1k dollars)", y = "Count", title = "Median Non-Family Income per County") +
+  scale_x_continuous(breaks = seq(0, 60, 2.5))
+
+ggplot(data2, aes(Library_Income/100000)) + 
+  geom_histogram(color = "black", fill = "grey") + 
+  labs(x = "Library Funding (100k dollars)", y = "Count", title = "Library Funding per County")+ 
+  scale_x_continuous(breaks = seq(0, 500, 50))
+
+ggplot(data2, aes(num_libraries)) + 
+  geom_histogram(color = "black", fill = "grey") + 
+  labs(x = "Number of Libraries", y = "Count", title = "Number of Libraries per County") + 
+  scale_x_continuous(breaks = seq(0, 20, 2))
+
+ggplot(data2, aes(Computer_Usage/1000)) + 
+  geom_histogram(color = "black", fill = "grey") + 
+  labs(x = "Computer Usage (1k Uses)", y = "Count", title = "Computer Usages per County") +
+  scale_x_continuous(breaks = seq(0, 600, 100))
+
+ggplot(data2, aes(Num_Computers)) + 
+  geom_histogram(color = "black", fill = "grey") + 
+  labs(x = "Number of Computers", y = "Count", title = "Number of Public Library Computers per County") +
+  scale_x_continuous(breaks = seq(0, 1200, 100))
+
+ggplot(data2, aes(Median_Age)) + 
+  geom_histogram(color = "black", fill = "grey") + 
+  labs(x = "Median County Age", y = "Count", title = "Median Age by County") +
+  scale_x_continuous(breaks = seq(0, 46, 1))
+
+ggplot(data2, aes(Total_Population/1000)) + 
+  geom_histogram(color = "black", fill = "grey") + 
+  labs(x = "County Population (1k Residents)", y = "Count", title = "County Populations") +
+  scale_x_continuous(breaks = seq(0, 1000, 100))
+
+ggplot(data2, aes(Library_Visits/1000)) + 
+  geom_histogram(color = "black", fill = "grey") + 
+  labs(x = "Library Visits (1k Visits)", y = "Count", title = "Library Visits Populations") 
+```
+
+
 
 ```{r}
 # runExample("01_hello")      # a histogram
@@ -267,8 +339,6 @@ map_data("county")%>%
 # runExample("06_tabsets")    # tabbed panels
 # runExample("07_widgets")    # help text and submit buttons
 ```
-
-
 
 
 
