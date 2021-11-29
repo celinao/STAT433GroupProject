@@ -283,6 +283,11 @@ data2 <- data %>%
   select(-matches(" ")) %>%
   unique()
 
+data2 %>%
+  summarise(County = County, 
+            a = Num_Computers/Total_Population) %>%
+  arrange(a)
+
 ggplot(data2, aes(Family_Income/1000)) + 
   geom_histogram(color = "black", fill = "grey") + 
   labs(x = "Family Income (1k dollars)", y = "Count", title = "Median Family Income per County") +
@@ -293,25 +298,24 @@ ggplot(data2, aes(NonFamily_Income/1000)) +
   labs(x = "Non-Family Income (1k dollars)", y = "Count", title = "Median Non-Family Income per County") +
   scale_x_continuous(breaks = seq(0, 60, 2.5))
 
-ggplot(data2, aes(Library_Income/100000)) + 
+ggplot(data2, aes(Library_Income/num_libraries/100000)) + 
   geom_histogram(color = "black", fill = "grey") + 
-  labs(x = "Library Funding (100k dollars)", y = "Count", title = "Library Funding per County")+ 
-  scale_x_continuous(breaks = seq(0, 500, 50))
+  labs(x = "Library Funding (100k dollars)", y = "Count", title = "Average Library Funding for each County") 
 
-ggplot(data2, aes(num_libraries)) + 
+ggplot(data2, aes(Total_Population/num_libraries/1000)) + 
   geom_histogram(color = "black", fill = "grey") + 
-  labs(x = "Number of Libraries", y = "Count", title = "Number of Libraries per County") + 
-  scale_x_continuous(breaks = seq(0, 20, 2))
+  labs(x = "Population per Library (1k)", y = "Count", title = "Average Population Served by Libary for each County") + 
+  scale_x_continuous(breaks = seq(0, 150, 25))
 
-ggplot(data2, aes(Computer_Usage/1000)) + 
+ggplot(data2, aes(Computer_Usage/Num_Computers/Total_Population)) + 
   geom_histogram(color = "black", fill = "grey") + 
-  labs(x = "Computer Usage (1k Uses)", y = "Count", title = "Computer Usages per County") +
+  labs(x = "Computer Usage", y = "Count", title = "Computer Usages per County", subtitle = "Normalized by Number of Computers and County Population")# +
   scale_x_continuous(breaks = seq(0, 600, 100))
 
-ggplot(data2, aes(Num_Computers)) + 
+ggplot(data2, aes(Total_Population/Num_Computers)) + 
   geom_histogram(color = "black", fill = "grey") + 
-  labs(x = "Number of Computers", y = "Count", title = "Number of Public Library Computers per County") +
-  scale_x_continuous(breaks = seq(0, 1200, 100))
+  labs(x = "Population Served by each Computer", y = "Count", title = "Average Population Served by each Computer") +
+  scale_x_continuous(breaks = seq(0, 3000, 500))
 
 ggplot(data2, aes(Median_Age)) + 
   geom_histogram(color = "black", fill = "grey") + 
@@ -323,9 +327,21 @@ ggplot(data2, aes(Total_Population/1000)) +
   labs(x = "County Population (1k Residents)", y = "Count", title = "County Populations") +
   scale_x_continuous(breaks = seq(0, 1000, 100))
 
-ggplot(data2, aes(Library_Visits/1000)) + 
+ggplot(data2, aes(Library_Visits/Total_Population)) + 
   geom_histogram(color = "black", fill = "grey") + 
-  labs(x = "Library Visits (1k Visits)", y = "Count", title = "Library Visits Populations") 
+  labs(x = "Library Visits/County Population", y = "Count", title = "Library Visits") 
+
+ggplot(data2, aes(Library_Income/Total_Population)) + 
+  geom_histogram(color = "black", fill = "grey") + 
+  labs(x = "Library Income/County Population", y = "Count", title = "Library Income as a Proportion of Population")
+
+ggplot(data2, aes(x = Library_Income, y = Family_Income)) + 
+  geom_point() + 
+  labs(x = "Library Funding", y = "Median Family Income", title = "The Relationship between Income and Library Funding")
+ggplot(data2) + 
+  geom_point(aes(x = Library_Income, y = NonFamily_Income, colour = "Non-Family Income")) + 
+  geom_point(aes(x = Library_Income, y = Family_Income, colour = "Family Inncome")) + 
+  labs(x = "Library Funding", y = "Median Income", title = "The Relationship between Income and Library Funding")
 ```
 
 
