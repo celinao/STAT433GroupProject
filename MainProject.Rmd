@@ -115,12 +115,14 @@ computer_Usage_Data <- data %>%
   rename_all(funs(str_replace_all(., " ", "_"))) %>%
   mutate(across(.cols=-c(County), as.numeric)) %>%
   group_by(County)  %>%
-  mutate(across(.cols=everything(), sum), 
+  mutate(across(.cols=c("Number_of_Public_Use_Computers", "Number_of_Public_Use_Computers_with_Internet_Access", "Uses_of_Public_Internet_Computers", "Wireless_Internet_Uses", "Library_Visits"), sum), 
          Uses_per_Computer = Uses_of_Public_Internet_Computers/Number_of_Public_Use_Computers, 
          Uses_per_Computer_with_Internet = Uses_of_Public_Internet_Computers/Number_of_Public_Use_Computers_with_Internet_Access)%>%
-  unique()
+  unique() 
 
 ```
+
+
 
 
 #### General Introduction: Understanding the data and where funding goes
@@ -140,6 +142,7 @@ Notes for all three datasets:
 
 
 # Basic Graphs of Computer Usage with Income Levels 
+
 
 ```{r}
 computer_usage_graph <- computer_Usage_Data %>%
@@ -344,6 +347,10 @@ ggplot(data2) +
   labs(x = "Library Funding", y = "Median Income", title = "The Relationship between Income and Library Funding")
 ```
 
+```{r}
+data2 %>%
+  arrange(Total_Population)
+```
 
 
 ```{r}
