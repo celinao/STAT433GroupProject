@@ -13,6 +13,9 @@ library(tidyverse)
 library(dplyr)
 library(stringr)
 library(maps)
+library(ggplot2)
+library(boot)
+library(car)
 data(countyMapEnv)
 ```
 
@@ -363,6 +366,34 @@ data2 %>%
 # runExample("07_widgets")    # help text and submit buttons
 ```
 
+```{r}
+#MODELING RELATIONSHIP BETWEEN COMPUTER USAGE AND INCOME
+meanusage = mean(computer_Usage_Data$Uses_per_Computer_with_Internet)
+ogfit = glm(Uses_per_Computer_with_Internet<meanusage~Income_Families+Income_NonFamily, data = computer_Usage_Data)
+summary(ogfit)
+#It seems to explain a good amount of deviance as well.
+Anova(glm(Uses_per_Computer_with_Internet<meanusage~Income_Families+Income_NonFamily, data = computer_Usage_Data))
 
+#Train/Test split
+dt = sort(sample(nrow(computer_Usage_Data), nrow(computer_Usage_Data)*.7))
+train<-computer_Usage_Data[dt,]
+test<-computer_Usage_Data[-dt,]
+fit = glm(Uses_per_Computer_with_Internet<meanusage~Income_Families+Income_NonFamily, data = train)
+pred = predict(fit, test, type="response")>0.5
+actual = test$Uses_per_Computer_with_Internet<meanusage
+mean(pred == actual)
+
+#Cross-Validation: raw and adjusted CV estimates of prediction error using 6-fold validation
+cv.glm(computer_Usage_Data, ogfit, K = 6)$delta
+
+#Let's look at a plot:
+plot_axes = expand.grid(Income_Families = seq(from = 67929, to = 113591, by = (113591-67929)/100),
+                        Income_NonFamily = seq(from = 31486, to = 51106, by = (51106-31486)/100))
+plot_axes$pred = plogis(predict(ogfit, newdata = plot_axes))
+ggplot(plot_axes)+
+  geom_tile(aes(x = Income_Families, y = Income_NonFamily, fill = pred))+
+  scale_fill_gradient(low = "white", high = "blue")
+```
+We can see that our model has about 25% prediction error when we do 6 different random train/test samples. Also, interestingly, our plot shows that at all levels of family income, as nonfamily income diminishes, usage per computer is more likely to be above average. The opposite effect is true for family income.
 
 
