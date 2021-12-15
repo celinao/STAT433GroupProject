@@ -112,7 +112,7 @@ computer_Usage_Data <- data %>%
          "Library Visits") %>%
   drop_na() %>%
   rename(Total_Population = "SEX AND AGE!!Total population", 
-         Income_Familes = "Median income (dollars)!!FAMILIES!!Families", 
+         Income_Families = "Median income (dollars)!!FAMILIES!!Families", 
          Income_NonFamily = "Median income (dollars)!!NONFAMILY HOUSEHOLDS!!Nonfamily households") %>%
   rename_all(funs(str_replace_all(., "((SEX AND AGE!!)|( years))+", ""))) %>%
   rename_all(funs(str_replace_all(., " ", "_"))) %>%
@@ -150,28 +150,28 @@ Notes for all three datasets:
 ```{r}
 computer_usage_graph <- computer_Usage_Data %>%
   left_join(library_income_costs, by="County") %>%
-  select("Total_Population", "Uses_per_Computer", "Library_Visits", "Income_Familes", "Wireless_Internet_Uses", "Income_NonFamily", "County") %>%
-  pivot_longer(cols = c("Income_Familes", "Income_NonFamily"), names_to = "Income_Type", values_to = "Income")
+  select("Total_Population", "Uses_per_Computer", "Library_Visits", "Income_Families", "Wireless_Internet_Uses", "Income_NonFamily", "County") %>%
+  pivot_longer(cols = c("Income_Families", "Income_NonFamily"), names_to = "Income_Type", values_to = "Income")
 
 computer_usage_graph %>%
   ggplot(aes(x = Income, y = Uses_per_Computer/Total_Population)) + 
   geom_point() + 
   labs(y = "Ratio of Library Computer Usage to County Population", x = "Income", title = "Relationship of County Wealth to Library Computer Usage") + 
-  geom_smooth(method = lm, se=FALSE, color="red") + 
+  #geom_smooth(method = lm, se=FALSE, color="red") + 
   facet_wrap(~Income_Type)
 
 computer_usage_graph %>%
   ggplot(aes(x = Income, y = Library_Visits/Total_Population)) + 
   geom_point() + 
   labs(x = "Income", y = "Number of Library Visits", title = "Library Visits v. County Population") + 
-  geom_smooth(method = lm, se=FALSE, color="red") + 
+  #geom_smooth(method = lm, se=FALSE, color="red") + 
   facet_wrap(~Income_Type)
 
 computer_usage_graph %>%
   ggplot(aes(x = Income, y = Wireless_Internet_Uses/Total_Population)) + 
   geom_point() + 
   labs(x = "Income", y = "Wireless Usage", title = "Wireless Usage v. County Population") + 
-  geom_smooth(method = lm, se=FALSE, color="red") + 
+  #geom_smooth(method = lm, se=FALSE, color="red") + 
   facet_wrap(~Income_Type)
 ```
 
@@ -182,7 +182,7 @@ computer_usage_graph %>%
 # Dane County Median Income is MUCH HIGHER than other places 
 computer_Usage_Data %>% 
   select(matches("ncome")) %>%
-  filter(Income_Familes > 1500000)
+  filter(Income_Families > 1500000)
 
 computer_usage_graph %>%
   filter(Wireless_Internet_Uses/Total_Population > 1)
@@ -217,8 +217,8 @@ programs_staff %>%
             non_librarian = Other_Paid_Staff/Total_Staff) %>%
   arrange(Ave_Salary) %>%
   left_join(computer_Usage_Data, by = "County") %>%
-  select(County, Ave_Salary, Income_Familes, non_librarian) %>%
-  ggplot(aes(x = Income_Familes, y = Ave_Salary)) + 
+  select(County, Ave_Salary, Income_Families, non_librarian) %>%
+  ggplot(aes(x = Income_Families, y = Ave_Salary)) + 
   geom_point() + 
   labs(x = "Median Family Income", y = "Average Staff Salary", title = "Average Salary by County Wealth")
 
@@ -249,7 +249,7 @@ map_data("county")%>%
 map_data("county")%>%
   filter(region == "wisconsin")%>%
   left_join(plot_map, by=c("subregion"="County")) %>% 
-  ggplot(aes(x = long, y = lat, outline = subregion, fill = Income_Familes)) +
+  ggplot(aes(x = long, y = lat, outline = subregion, fill = Income_Families)) +
   geom_polygon(colour = "grey50") +
   scale_fill_continuous(type = "viridis", na.value = "grey80") + 
   theme(axis.line=element_blank(),
@@ -275,7 +275,8 @@ data2 <- data %>%
          `Number of Public Use Computers`, 
          `Uses of Public Internet Computers`) %>%
   drop_na() %>%
-  mutate(across(.cols=-c(County), as.numeric)) %>%
+  mutate(across(.cols=-c(County), as.numeric), 
+         County = tolower(County)) %>%
   rename(Total_Population = (`SEX AND AGE!!Total population`), 
          Median_Age = (`SEX AND AGE!!Median age (years)`), 
          Family_Income = `Median income (dollars)!!FAMILIES!!Families`, 
@@ -289,10 +290,6 @@ data2 <- data %>%
   select(-matches(" ")) %>%
   unique()
 
-data2 %>%
-  summarise(County = County, 
-            a = Num_Computers/Total_Population) %>%
-  arrange(a)
 
 ggplot(data2, aes(Family_Income/1000)) + 
   geom_histogram(color = "black", fill = "grey") + 
@@ -340,10 +337,9 @@ ggplot(data2, aes(Library_Visits/Total_Population)) +
 ggplot(data2, aes(Library_Income/Total_Population)) + 
   geom_histogram(color = "black", fill = "grey") + 
   labs(x = "Library Income/County Population", y = "Count", title = "Library Income as a Proportion of Population")
+ggplot(data2, aes(x = Library_Income, y = Total_Population)) + 
+  geom_point() 
 
-ggplot(data2, aes(x = Library_Income, y = Family_Income)) + 
-  geom_point() + 
-  labs(x = "Library Funding", y = "Median Family Income", title = "The Relationship between Income and Library Funding")
 ggplot(data2) + 
   geom_point(aes(x = Library_Income, y = NonFamily_Income, colour = "Non-Family Income")) + 
   geom_point(aes(x = Library_Income, y = Family_Income, colour = "Family Inncome")) + 
@@ -351,18 +347,104 @@ ggplot(data2) +
 ```
 
 ```{r}
-data2 %>%
-  arrange(Total_Population)
+
+# RELATIONSHIPS
+
+ggplot(data2, aes(Total_Population/Num_Computers)) +
+  geom_histogram(color = "black", fill = "grey") + 
+  labs(x = "Population Served by each Computer", y = "Count", title = "Average Population Served by each Computer") +
+  scale_x_continuous(breaks = seq(0, 3000, 500))
+
+ggplot(data2, aes(y = Total_Population, x = Num_Computers)) + 
+  geom_point() 
+
+ggplot(data2, aes(Computer_Usage/Num_Computers/Total_Population)) + 
+  geom_histogram(color = "black", fill = "grey") + 
+  labs(x = "Computer Usage", y = "Count", title = "Computer Usages per County", subtitle = "Normalized by Number of Computers and County Population")# +
+  scale_x_continuous(breaks = seq(0, 600, 100))
+
+# COUNTY DATA EXPLORATION
+
+ggplot(data2, aes(Total_Population/1000)) + 
+  geom_histogram(color = "black", fill = "grey") + 
+  labs(x = "County Population (1k Residents)", y = "Count", title = "County Populations") +
+  scale_x_continuous(breaks = seq(0, 1000, 100))
+
+map_data("county")%>%
+  filter(region == "wisconsin")%>%
+  left_join(data2, by=c("subregion"="County")) %>% 
+  ggplot(aes(x = long, y = lat, outline = subregion, fill = Total_Population)) +
+  geom_polygon(colour = "grey50") +
+  scale_fill_continuous(type = "viridis", na.value = "grey80") + 
+  theme(axis.line=element_blank(),
+        axis.text=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title=element_blank(),
+        panel.background=element_blank(),
+        panel.border=element_blank(),
+        panel.grid=element_blank()) + 
+  labs(title = "Total Population for Wisconsin Counties", fill = "Total Population")
+
+map_data("county")%>%
+  filter(region == "wisconsin")%>%
+  left_join(data2, by=c("subregion"="County")) %>% 
+  ggplot(aes(x = long, y = lat, outline = subregion, fill = Median_Age)) +
+  geom_polygon(colour = "grey50") +
+  scale_fill_continuous(type = "viridis", na.value = "grey80") + 
+  theme(axis.line=element_blank(),
+        axis.text=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title=element_blank(),
+        panel.background=element_blank(),
+        panel.border=element_blank(),
+        panel.grid=element_blank()) + 
+  labs(title = "Median Age for Wisconsin Counties", fill = "Median Age")
+
+map_data("county")%>%
+  filter(region == "wisconsin")%>%
+  left_join(data2, by=c("subregion"="County")) %>% 
+  ggplot(aes(x = long, y = lat, outline = subregion, fill = Family_Income)) +
+  geom_polygon(colour = "grey50") +
+  scale_fill_continuous(type = "viridis", na.value = "grey80") + 
+  theme(axis.line=element_blank(),
+        axis.text=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title=element_blank(),
+        panel.background=element_blank(),
+        panel.border=element_blank(),
+        panel.grid=element_blank()) + 
+  labs(title = "Median Family Income for Wisconsin Counties", fill = "Median Family \nIncome (dollars)")
+
+
+# LIBRARY DATA EXPLORATION
+
+ggplot(data2, aes(x = Total_Population, y = Library_Visits)) + 
+  geom_point() + 
+  labs(x = "Library Visits", y = "County Population", title = "Library Visits vs. County Population")
+
+ggplot(data2, aes(y = Library_Income, x = Total_Population)) + 
+  geom_point() + 
+  labs(x = "Library Income", y = "County Population", title = "Library Income vs. County Population")
+
+ggplot(data2) + 
+  geom_point(aes(x = Library_Income, y = NonFamily_Income, colour = "Non-Family Income")) + 
+  geom_point(aes(x = Library_Income, y = Family_Income, colour = "Family Inncome")) + 
+  labs(x = "Library Funding", y = "Median Income", title = "The Relationship between Income and Library Funding")
+
+ggplot(data2, aes(Library_Income/num_libraries/100000)) + 
+  geom_histogram(color = "black", fill = "grey") + 
+  labs(x = "Library Funding (100k dollars)", y = "Count", title = "Average Library Funding for each County") 
 ```
+
 
 
 ```{r}
 # runExample("01_hello")      # a histogram
 # runExample("02_text")       # tables and data frames
 # runExample("03_reactivity") # a reactive expression
-# runExample("04_mpg")        # global variables
+runExample("04_mpg")        # global variables
 # runExample("05_sliders")    # slider bars
-# runExample("06_tabsets")    # tabbed panels
+runExample("06_tabsets")    # tabbed panels
 # runExample("07_widgets")    # help text and submit buttons
 ```
 
@@ -392,7 +474,8 @@ plot_axes = expand.grid(Income_Families = seq(from = 67929, to = 113591, by = (1
 plot_axes$pred = plogis(predict(ogfit, newdata = plot_axes))
 ggplot(plot_axes)+
   geom_tile(aes(x = Income_Families, y = Income_NonFamily, fill = pred))+
-  scale_fill_gradient(low = "white", high = "blue")
+  scale_fill_gradient(low = "white", high = "blue") + 
+  labs(x = "Family Income", y = "Non-Family Income", title = "Predicted Effects of Family vs Non-Family Income on Library Computer Usage")
 ```
 We can see that our model has about 25% prediction error when we do 6 different random train/test samples. Also, interestingly, our plot shows that at all levels of family income, as nonfamily income diminishes, usage per computer is more likely to be above average. The opposite effect is true for family income.
 
