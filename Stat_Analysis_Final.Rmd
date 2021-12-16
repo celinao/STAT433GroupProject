@@ -1,0 +1,262 @@
+---
+title: "Statistical Analyses Final"
+author: "Rob"
+date: "12/15/2021"
+output: html_document
+---
+
+```{r, include=FALSE}
+# Necessary Packages 
+rm(list=ls())
+library(readr)
+library(tidyverse)
+library(dplyr)
+library(stringr)
+library(maps)
+library(car)
+data(countyMapEnv)
+```
+
+
+# Downloading the Data and joining  
+```{r, message=FALSE, warning=FALSE}
+#Demographic Data
+demo_2019 <- read_csv("data\\WICounty2019Demographics.csv", skip = 1) %>%
+  select(-matches("(Margin)|(Percent)|(ratio)|(_1)"), -id) %>%
+  select(matches("(Total population)|(Geographic Area)")) %>%
+  select(-matches("Hispanic or Latino \\(of any race\\)!!"), 
+         -matches("American Indian and Alaska Native!!"),
+         -matches("Asian!!"),
+         -matches("Native Hawaiian and Other Pacific Islander!!"),
+         -matches("Two or more races!"), 
+         -matches("and over$"), 
+         -matches("Race alone or in combination with one or more other races!!")) %>% 
+  rename_all(funs(str_replace_all(., "((Estimate!!)|(Total population!!)+)", ""))) %>%
+  rename(County = "Geographic Area Name") %>%
+  mutate(County = sub(" County, Wisconsin", "", County))
+
+#Income Data
+income_2019 <- read_csv("data\\WICounty2019Income.csv", na = "N", skip=1) %>%
+  select(-id,-matches("(Margin)|(Distribution)")) %>%
+  select(-matches("race"), -matches("FAMILIES!!families!!")) %>%
+  rename_all(funs(str_replace_all(., "((Estimate!!)|(Number!!))+", ""))) %>%
+  rename(County = "Geographic Area Name")%>%
+  mutate(County = sub(" County, Wisconsin", "", County))
+
+#Library Data
+library_data <- readxl::read_excel("data\\public_library_service_data_2019.xlsx", sheet = "2019 PRELIMINARY DATA", skip = 1) %>%
+  slice(-1) %>%
+  select(-c(
+            "Library ID", 
+            "Municipality",
+            "Public Library System",
+            "Branches", 
+            "15. No. of Bookmobiles Owned", 
+            "Other Service Outlets", 
+            "Books-by-Mail", 
+            "Joint Library under s.43.53 1=Yes", 
+            "Participating Municipalities", 
+            "Circulation Count Method: Actual / Survey", 
+            "Locale Code", 
+            "Other Material Description"), 
+         -matches("(Outlay)|(Access Denied)|(Databases)|(Circulation)|(Collection Retrievals)")) %>%
+  mutate(across(.cols=-c(County), as.numeric))
+
+data <- library_data %>%
+  na_if("0") %>%
+  left_join(demo_2019, by="County") %>%
+  inner_join(income_2019, by="County") 
+
+library_income_costs <- data %>%
+  select(County, "Total Income", 
+         "Salaries & Wages", 
+         "Print Materials", 
+         "Electronic format", 
+         "Audiovisual Materials", 
+         "Contracted Services", 
+         "Other Operating Expenditures", 
+         "Total Operating Expenditures", 
+         "Resident Support per Capita (Local Revenues and Resident Population)") %>%
+  rename(Library_Income = `Total Income`) %>%
+  rename_all(funs(str_replace_all(., " ", "_"))) %>%
+  rename(Resident_Support_per_Capita = `Resident_Support_per_Capita_(Local_Revenues_and_Resident_Population)`) %>%
+  drop_na() %>%
+  mutate(across(.cols=-c(County), as.numeric)) %>%
+  group_by(County) %>%
+  mutate(across(.cols=everything(), sum)) %>%
+  unique()
+
+# Note: Library focuses activies on Children (0-11), Young Adults (12-18), and other. 
+# They only recorded the Number of Uses of computers, they didn't divide it based on if they had access to Wifi
+# Not all locations record Wireless Uses or Library Visits but, I thought they could be useful. 
+
+computer_Usage_Data <- data %>%
+  select(County, 
+         matches("SEX AND AGE"), 
+         -matches("(Male)|(Female)|(Median)"), 
+         "Median income (dollars)!!FAMILIES!!Families", 
+         "Median income (dollars)!!NONFAMILY HOUSEHOLDS!!Nonfamily households", 
+          matches("Computers"), "Wireless Internet Uses", 
+         "Library Visits", "Total Income") %>%
+  drop_na() %>%
+  rename(Total_Population = "SEX AND AGE!!Total population", 
+         Income_Families = "Median income (dollars)!!FAMILIES!!Families", 
+         Income_NonFamily = "Median income (dollars)!!NONFAMILY HOUSEHOLDS!!Nonfamily households") %>%
+  rename_all(funs(str_replace_all(., "((SEX AND AGE!!)|( years))+", ""))) %>%
+  rename_all(funs(str_replace_all(., " ", "_"))) %>%
+  mutate(across(.cols=-c(County), as.numeric)) %>%
+  group_by(County)  %>%
+  mutate(across(.cols=c("Number_of_Public_Use_Computers", "Number_of_Public_Use_Computers_with_Internet_Access", "Uses_of_Public_Internet_Computers", "Wireless_Internet_Uses", "Library_Visits", "Total_Income"), sum), 
+         Uses_per_Computer = Uses_of_Public_Internet_Computers/Number_of_Public_Use_Computers, 
+         Uses_per_Computer_with_Internet = Uses_of_Public_Internet_Computers/Number_of_Public_Use_Computers_with_Internet_Access)%>%
+  unique() 
+
+```
+
+
+```{r}
+computer_usage_analysis <- computer_Usage_Data %>%
+  left_join(library_income_costs, by="County") %>%
+  select("Total_Population", "Uses_per_Computer", "Library_Visits", "Income_Families", "Wireless_Internet_Uses", "Income_NonFamily", "County", "Total_Income") %>%
+  rename("Funding" = "Total_Income")%>%
+  pivot_longer(cols = c("Income_Families", "Income_NonFamily"), names_to = "Income_Type", values_to = "Income")%>%
+  mutate(int.use.per.cap = Wireless_Internet_Uses/Total_Population)%>%
+  filter(int.use.per.cap<7)
+
+
+data2 <- data %>%
+  select(County, 
+         `SEX AND AGE!!Total population`, 
+         `SEX AND AGE!!Median age (years)`, 
+         `Median income (dollars)!!FAMILIES!!Families`, 
+         `Median income (dollars)!!NONFAMILY HOUSEHOLDS!!Nonfamily households`, 
+         `Library Visits`, 
+         `Total Income`, 
+         `Number of Public Use Computers`, 
+         `Uses of Public Internet Computers`) %>%
+  drop_na() %>%
+  mutate(across(.cols=-c(County), as.numeric)) %>%
+  rename(Total_Population = (`SEX AND AGE!!Total population`), 
+         Median_Age = (`SEX AND AGE!!Median age (years)`), 
+         Family_Income = `Median income (dollars)!!FAMILIES!!Families`, 
+         NonFamily_Income = `Median income (dollars)!!NONFAMILY HOUSEHOLDS!!Nonfamily households`) %>%
+  group_by(County) %>%
+  mutate(num_libraries = n(), 
+         Library_Visits = sum(`Library Visits`), 
+         Library_Income = sum(`Total Income`), 
+         Num_Computers = sum(`Number of Public Use Computers`), 
+         Computer_Usage = sum(`Uses of Public Internet Computers`)) %>%
+  select(-matches(" ")) %>%
+  unique()
+
+data2 %>%
+  summarise(County = County, 
+            a = Num_Computers/Total_Population) %>%
+  arrange(a)
+
+```
+
+```{r}
+expl.mod.df = library_data%>%
+  filter(`Library Visits`!=0)%>%
+  select(`Library Visits`,`Total Income`)%>%
+  mutate(visits = log(`Library Visits`),
+         funding = log(`Total Income`))
+
+#As we would assume, there is a significant effect of funding on visits to the library.
+exp.fit = lm(visits~funding, data = expl.mod.df)
+summary(exp.fit)
+
+```
+
+# County-level investigation.
+```{r}
+agedata = computer_Usage_Data%>%
+  mutate(Over_65 = `65_and_over...95`,
+         pct_over_65 = 100*(Over_65/Total_Population),
+         pct_YA = 100*((`15_to_19`+`20_to_24`)/Total_Population))
+
+#Not a significant relationship between seniority and computer usage, though the coefficient is negative
+summary(lm(log(Uses_per_Computer_with_Internet)~pct_over_65, data = agedata))
+
+#Nor between young adult percentage and computer usage but the coefficient is positive.
+summary(lm(log(Uses_per_Computer_with_Internet)~pct_YA, data = agedata))
+```
+
+```{r}
+#What about relationship between everything and # computers when we control for funding and population? Funding seems to be the only significant variable in the model.
+data3 = data2%>%
+  mutate(usage_per_computer = Computer_Usage/Num_Computers,
+         funding_per_library = log(Library_Income/num_libraries),
+         income_idx = log(Family_Income+NonFamily_Income),
+         Total_Population = log(Total_Population),
+         Library_Visits = log(Library_Visits))%>%
+  select(-Num_Computers,-Computer_Usage,-Library_Income,-num_libraries,-Family_Income,-NonFamily_Income)
+fit3 = lm(usage_per_computer~.-County, data = data3)
+summary(fit3)
+Anova(fit3)
+
+
+#There is a significant effect of the median age on computer usage when controlling for population. As median age increases, computer usage decreases.
+agefit = lm(usage_per_computer~log(Total_Population)+ Median_Age, data = data3)
+summary(agefit)
+Anova(agefit)
+
+#What happens when we add funding into the model?
+age_funding = lm(usage_per_computer~log(Total_Population)+ Median_Age+log(funding_per_library), data = data3)
+summary(age_funding)
+
+#We get a model that explains significantly more variance than the model with just population and median age.
+anova(agefit,age_funding)
+```
+
+```{r}
+#RELATIONSHIP BETWEEN COMPUTER USAGE AND INCOME
+int.fit = lm(int.use.per.cap~log(Income)+Income_Type, data = computer_usage_analysis)
+summary(int.fit)
+
+#Income, especially nonfamily income, is negatively related to computer usage.
+comp.fit = lm(Uses_per_Computer~log(Income)+Income_Type, data = computer_usage_analysis)
+summary(comp.fit)
+
+#RELATIONSHIP BETWEEN USAGE AND FUNDING
+int.fit.fun = lm(int.use.per.cap~log(Funding), data = computer_usage_analysis)
+summary(int.fit.fun)
+
+#Funding is positively associated with computer usage.
+comp.fit.fun = lm(Uses_per_Computer~log(Funding), data = computer_usage_analysis)
+summary(comp.fit.fun)
+
+#RELATIONSHIP BETWEEN FUNDING AND INCOME
+summary(lm(Funding~Income, data = computer_usage_analysis))
+
+#When we enter both income and funding into the model, their effects are stable. Higher incomes correlate with lower computer usage, but higher funding correlates with higher computer usage. More funding = more visitation = more computer usage.
+summary(lm(Uses_per_Computer~log(Income)+Income_Type+log(Funding), data = computer_usage_analysis))
+```
+
+# Library-level investigation
+```{r}
+library(car)
+data4 = data%>%
+  mutate(no_usage = (`Library Visits`-`Uses of Public Internet Computers`)/10000,
+         usage_idx = `Uses of Public Internet Computers`/10000,
+         pop_log = log(`Resident Population`),
+         pop.per.computer = log(`Resident Population`/`Number of Public Use Computers with Internet Access`),
+         funding_log = log(`Total Income`),
+         vis = log(`Library Visits`))
+
+library.model = lm(usage_idx~pop.per.computer+vis+funding_log, data = data4)
+
+summary(library.model)
+Anova(library.model)
+
+#Our variance inflation factors are high for vis and funding, which means that they may potentially be correlated with eachother. We actually know this from our first model, which indicated that funding was a significant predictor of visitation.
+vif(library.model)
+
+#Let's remove visitation and see if funding has a direct impact on usage.
+summary(lm(usage_idx~pop.per.computer+funding_log, data = data4))
+
+#Interesting. County income and library funding are not correlated as we expected.
+```
+
+
